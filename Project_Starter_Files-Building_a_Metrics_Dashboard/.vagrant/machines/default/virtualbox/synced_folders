@@ -1,0 +1,1 @@
+{"rsync":{"/vagrant":{"type":"rsync","guestpath":"/vagrant","hostpath":"/Users/philips/projects/projects/AWS_Learning/metrics_dashboard/Project_Starter_Files-Building_a_Metrics_Dashboard","disabled":false,"__vagrantfile":true,"owner":"vagrant","group":"vagrant"}}}
