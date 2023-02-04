@@ -6,8 +6,6 @@ metadata:
     prometheus.io/path: /metrics
     prometheus.io/port: frontend
   name: frontend-app
-  labels:
-    app: frontend
 spec:
   replicas: 3
   selector:
@@ -19,11 +17,18 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: bkk003/frontend:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8080
+        - name: frontend
+          image: bkk003/frontend:latest
+          ports:
+          - containerPort: 8080
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "64m"
+            limits:
+              memory: "256Mi"
+              cpu: "256m"
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -42,6 +47,7 @@ spec:
     - name: frontend
       port: 8080
       targetPort: 8080
+      nodePort: 30000
   type: LoadBalancer
 ---
 apiVersion: monitoring.coreos.com/v1

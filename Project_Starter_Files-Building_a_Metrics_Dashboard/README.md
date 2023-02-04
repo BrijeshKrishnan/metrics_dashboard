@@ -49,7 +49,8 @@ kubectl get pods --namespace=monitoring
 kubectl get pods --namespace=observability
 kubectl get pods
 ```
-![terminal-image](images/terminal_image2.png)
+![terminal-image-1](Exercise-img/kubectlPodSvc.png)
+![terminal-image-2](Exercise-img/Application%26Jaeger_yaml.png)
 
 
 ## Setup the Jaeger and Prometheus source
@@ -64,15 +65,16 @@ metadata:
 EOF
 ```
 
+![Datasource](Exercise-img/Datasource.png)
 
 ## Create a Basic Dashboard
 Create a dashboard in Grafana that shows Prometheus as a source. Take a screenshot and include it here.
 
-![grafana](images/grafana.png)
+![grafana-prometheus](Exercise-img/prometheus-error-grafana.png)
 
-![grafana-prometheus](images/grafana-prometheus.png)
+![grafana](Exercise-img/grafana.png)
 
-![simple_dashboard](images/simple_dashboard.png)
+![simple_dashboard](Exercise-img/Dashboard-5min.png)
 
 ## Describe SLO/SLI
 Describe, in your own words, what the SLIs are, based on an SLO of *monthly uptime* and *request response time*.
@@ -84,11 +86,11 @@ A Service-Level Indicator (SLI) is a  metric used to measure the performance of 
 ## Creating SLI metrics.
 It is important to know why we want to measure certain metrics for our customer. Describe in detail 5 metrics to measure these SLIs. 
 ```
-1. Response time of requests
-2. Amount of CPU and RAM usage
-3. The average bandwidth in a specifi period of time
-4. Time a service is active
-5. Amount of failures in a unit of time
+1) Latency.the time taken to respond to a request.
+2) Uptime.time of availability of the app
+3) CPU Utilization
+4) Network Capacity. average bandwidth in month
+5) memory usage
 
 ```
 
@@ -96,9 +98,7 @@ It is important to know why we want to measure certain metrics for our customer.
 ## Create a Dashboard to measure our SLIs
 Create a dashboard to measure the uptime of the frontend and backend services We will also want to measure to measure 40x and 50x errors. Create a dashboard that show these values over a 24 hour period and take a screenshot.
 
-![grafana](images/Dashboard-1.png)
-![grafana1](images/Dashboard-2.png)
-![grafana2](images/Dashboard-3.png)
+![SLO-SLI](Exercise-img/dashboard-12hr.png)
 
 
 ## Tracing our Flask App
@@ -107,70 +107,95 @@ Also provide a (screenshot) sample Python file containing a trace and span code 
 
 ```
 
-kubectl port-forward svc/backend-service 8081:8081
+kubectl -n observability  port-forward  service/bkk-traces-query --address 0.0.0.0 16686:16686
+for i in 1 2 3 4 5 6 7 8 9; do curl localhost:8081; done
 
-# Run some request to the api endpoint
-for i in 0 1 2 3 4 5 6 7 8 9; do curl localhost:8081/api; done
 
-kubectl port-forward -n observability  service/simplest-query --address 0.0.0.0 16686:16686
+kubectl --namespace monitoring port-forward svc/prometheus-grafana --address 0.0.0.0 3000:80
+Forwarding from 0.0.0.0:3000 -> 3000
+
+bkk-traces-query.observability.svc.cluster.local:16686
+
 
 ```
-![trace](images/trace.png)
+![trace](Exercise-img/jaeger-grafana-backend.png)
 
+![trace](Exercise-img/jaeger-service-operations.png)
+
+![trace](Exercise-img/jaeger-200.png)
 
 ## Jaeger in Dashboards
 Let's add the metric to our current Grafana dashboard.
 
-![jaeger](images/jaeger_dashboard.png)
+![jaeger](Exercise-img/jaeger-grafana-backend.png)
 
 ## Report Error
-*TODO:* Using the template below, write a trouble ticket for the developers, to explain the errors that you are seeing (400, 500, latency) and to let them know the file that is causing the issue also include a screenshot of the tracer span to demonstrate how we can user a tracer to locate errors easily.
+Using the template below, write a trouble ticket for the developers, to explain the errors that you are seeing (400, 500, latency) and to let them know the file that is causing the issue also include a screenshot of the tracer span to demonstrate how we can user a tracer to locate errors easily.
 
 TROUBLE TICKET
 
-Name: Request endpoint star fail throw 405 Method Not Allowed
+Name: error when call /error-500 endpoint
 
-Date: Feb 01 2023, 17:30 PM
+Date: Feb 04 2023, 11:54:45.577
 
-Subject: Backend can't acces MongoDB
+Subject: request not successfully completed
 
-Affected Area: Backend Service
+Affected Area: backend
 
-Severity: High
+Severity: critical
 
-Description: As we port-forwarding the application accessing /star endpoint, it throw 405 error which is caused by the mongodb://example-mongodb-svc.default.svc.cluster.local:27017/example-mongodb URL is not exist in the cluster. We need to make the MongoDB URL available for the cluster.
+Description: when call the star endpoint it return 500 status code so we need to return the response 200. that is critical because it may we can't make DB connection
 
+![trace](Exercise-img/Error500-trace.png)
 
 ## Creating SLIs and SLOs
 
 * Create an SLO guaranteeing that our application has a 99.95% uptime per month. Name three SLIs that you would use to measure the success of this SLO.  
-   - Latency: The response time of requests should less than 30ms within a month.
-   - Failure rate: Ensure that the status code 2xx rates are around 97%.
-   - Uptime: Uptime nedd to be approximate 99 percent within a month and response time should be around 500 milliseconds.
+
+- Latency : 95% of the requests takes 30 - 40 ms to complete
+- Uptime : 99.95% service should be available
+- Error Rate : must be less than 0.5 % of 4xx or 5xx errors
+- Resource Usage: CPU and RAM usage must not exceed 95% per month.
 
 
 ## Building KPIs for our plan
 
 * Now that we have our SLIs and SLOs, create KPIs to accurately measure these metrics. We will make a dashboard for this, but first write them down here.  
-   - Latency: Response time.  
-   - Failure rate: Errors per second / response rate per second.    
-   - Uptime: Sucessful requests during pod uptime.  
-   - Network capcity: successful request per second /  request per second.  
-   - Resource capcity: CPU, RAM usage per pod.  
+
+- Latency : when the latency within the 30 - 40 that indicate of healthy application that have suitable memory to serve the client in month
+
+performance - This KPI shows the application's overall performance.
+Monthly uptime - This KPI shows the application's overall usability when the Latency avg per request is low or within 30 - 40 ms.
+
+- Uptime : Due to our SLOs we want the application up 99.95% per month
+
+Monthly downtime - This KPI shows the number of the downtime of the application.
+Avg monthly Uptime - This KPI shows the application's overall usabilityThis KPI shows the application's overall usability .
+
+- Error Rate : we want the application run without failure so we want the fail requests than 0.05% per month.
+
+Monthly uptime - This KPI shows the application's overall usability when the failure rate is low.
+50x code responses per month - this KPI shows downtime of the application.
+
+- Resource Usage: To can see the consumption so let us know if we want to expand the resources to our solution or not in month.
+
+Average monthly Resource usage of all the pods - This KPI was selected to show the total amount of resources utilized by all the pods needed to run the application.
+Monthly quota limit - This KPI was selected to show whether the application is using more resources than its allotted quota.
 
 
 ## Final Dashboard
-*TODO*: Create a Dashboard containing graphs that capture all the metrics of your KPIs and adequately representing your SLIs and SLOs. Include a screenshot of the dashboard here, and write a text description of what graphs are represented in the dashboard.  
+Dashboard containing graphs that capture all the metrics of your KPIs and adequately representing your SLIs and SLOs. Include a screenshot of the dashboard here, and write a text description of what graphs are represented in the dashboard.  
 
-![grafana](images/Dashboard-1.png)
-![grafana1](images/Dashboard-2.png)
-![grafana2](images/Dashboard-3.png)
+![Dashboard](Exercise-img/Dashboard-24hr.png)
 
-![jaeger](images/jaeger_dashboard.png)
+![Dashboard](Exercise-img/dashboard-12hr.png)
 
-Uptime: Uptime of each pod.
-Requests per second: Number of successful Flask requests per second.
-Errors per second: Number of failed (non HTTP 200) responses per second.
-Total requests per minute: The total number of requests measured within one minute.
-Memory usage: The memory usage of the Flask app.
-Jaeger Spans: Tracing Backend Service using Jaeger.
+![Dashboard](Exercise-img/grafana-404.png)
+
+## Description of the dashboard:
+
+- Uptime: the up time is 100 %
+- Error Rate: the percentage of failed requests over success requests
+- CPU Usage: CPU utilization by the service
+- Memory Usage: Memory utilization by the service
+- 50x, 40x Errors: 50x, 40x respond from our service
