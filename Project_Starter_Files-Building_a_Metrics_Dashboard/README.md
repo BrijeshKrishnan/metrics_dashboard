@@ -57,12 +57,11 @@ kubectl get pods
 Expose Grafana to the internet and then setup Prometheus as a data source. Provide a screenshot of the home page after logging into Grafana.
 
 ```
-kubectl apply -n observability -f - <<EOF
 apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
- name: simplest
-EOF
+ name: bkk-traces
+ namespace: observability
 ```
 
 ![Datasource](Exercise-img/Datasource.png)
@@ -154,7 +153,7 @@ Description: when call the star endpoint it return 500 status code so we need to
 
 - Latency : 95% of the requests takes 30 - 40 ms to complete
 - Uptime : 99.95% service should be available
-- Error Rate : must be less than 0.5 % of 4xx or 5xx errors
+- Error Rate : must be less than 1 % of 4xx or 5xx errors
 - Resource Usage: CPU and RAM usage must not exceed 95% per month.
 
 
@@ -172,7 +171,7 @@ Monthly uptime - This KPI shows the application's overall usability when the Lat
 Monthly downtime - This KPI shows the number of the downtime of the application.
 Avg monthly Uptime - This KPI shows the application's overall usabilityThis KPI shows the application's overall usability .
 
-- Error Rate : we want the application run without failure so we want the fail requests than 0.05% per month.
+- Error Rate : we want the application run without failure so we want the fail requests than 1% per month.
 
 Monthly uptime - This KPI shows the application's overall usability when the failure rate is low.
 50x code responses per month - this KPI shows downtime of the application.
